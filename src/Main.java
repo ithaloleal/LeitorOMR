@@ -1,3 +1,4 @@
+import java.io.File;
 import java.util.*;
 
 import org.opencv.core.*;
@@ -111,7 +112,7 @@ public class Main {
         //Mat image = Imgcodecs.imread("C:\\Users\\PC\\Downloads\\omr_test_01.png", Imgcodecs.IMREAD_GRAYSCALE);
 
         // Carrega a imagem do gabarito em escala cinza
-        Mat gabarito = Imgcodecs.imread("C:\\Users\\PC\\Downloads\\omr_test_01.png", Imgcodecs.IMREAD_GRAYSCALE);
+        Mat gabarito = Imgcodecs.imread("src/gabaritos/omr_test_01.png", Imgcodecs.IMREAD_GRAYSCALE);
 
         // Aplica uma limiarização para binarizar a imagem
         Mat binarizado = new Mat();
