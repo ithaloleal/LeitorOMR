@@ -8,7 +8,8 @@ import org.opencv.imgproc.*;
 public class Main {
 
     //Define quantidade de alternativas tem as questoes
-    private static final int QTD_ALTERNATIVAS = 5;
+    private static final int QTD_ALTERNATIVAS = 6;
+    private static final String PATH = "src/gabaritos/omr_test_2.png";
 
     public static void main(String[] args) {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -18,7 +19,7 @@ public class Main {
     }
 
     public static void exemplo1() {
-        Mat image = Imgcodecs.imread("src/gabaritos/omr_test_01.png");
+        Mat image = Imgcodecs.imread(PATH);
 
         // Convertendo a imagem para tons de cinza
         Mat gray = new Mat();
@@ -96,7 +97,7 @@ public class Main {
         //Mat image = Imgcodecs.imread("C:\\Users\\PC\\Downloads\\omr_test_01.png", Imgcodecs.IMREAD_GRAYSCALE);
 
         // Carrega a imagem do gabarito em escala cinza
-        Mat gabarito = Imgcodecs.imread("src/gabaritos/omr_test_01.png", Imgcodecs.IMREAD_GRAYSCALE);
+        Mat gabarito = Imgcodecs.imread(PATH, Imgcodecs.IMREAD_GRAYSCALE);
 
         // Aplica uma limiarização para binarizar a imagem
         //Mat binarizado = new Mat();
