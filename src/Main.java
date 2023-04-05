@@ -13,11 +13,12 @@ public class Main {
     public static void main(String[] args) {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-        teste03();
+        exemplo1();
+        exemplo2();
     }
 
-    public static void teste01() {
-        Mat image = Imgcodecs.imread("C:\\Users\\PC\\Downloads\\omr_test_01.png");
+    public static void exemplo1() {
+        Mat image = Imgcodecs.imread("src/gabaritos/omr_test_01.png");
 
         // Convertendo a imagem para tons de cinza
         Mat gray = new Mat();
@@ -30,16 +31,20 @@ public class Main {
         // Encontrando os contornos (bordas) na imagem
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
-        Imgproc.findContours(thresh, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(thresh, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // Percorrendo os contornos encontrados
         for (int i = 0; i < contours.size(); i++) {
 
             // Calculando a área do contorno
-            double area = Imgproc.contourArea(contours.get(i));
+            //double area = Imgproc.contourArea(contours.get(i));
+
+            //m00 do moments tambem retorna a area do contorno
+            Mat circle = contours.get(i);
+            Moments m = Imgproc.moments(circle);
 
             // Ignorando contornos muito pequenos
-            if (area < 100) {
+            if (m.m00 < 150) {
                 continue;
             }
 
@@ -47,20 +52,39 @@ public class Main {
             MatOfPoint2f approxCurve = new MatOfPoint2f();
             MatOfPoint2f contour2f = new MatOfPoint2f(contours.get(i).toArray());
             double peri = Imgproc.arcLength(contour2f, true);
-            Imgproc.approxPolyDP(contour2f, approxCurve, 0.02 * peri, true);
+            Imgproc.approxPolyDP(contour2f, approxCurve, 0.025 * peri, true);
             Point[] points = approxCurve.toArray();
+
 
             // Verificando se o contorno é um círculo
             if (points.length == 8) {
+
+                Point center = new Point((int) (m.m10 / m.m00), (int) (m.m01 / m.m00));
+                int radius = (int) Math.round(Math.sqrt(m.m00 / Math.PI));
+
+                // Extrai a região da resposta correspondente
+                Rect roi = new Rect((int) center.x - radius, (int) center.y - radius, radius * 2, radius * 2);
+                Mat submat = thresh.submat(roi);
+                Scalar meanColor = Core.mean(submat);
+
                 Imgproc.drawContours(image, contours, i, new Scalar(0, 0, 255), 3);
                 System.out.println("Círculo encontrado na posição x=" + points[0].x + ", y=" + points[0].y);
+                System.out.println("Area Total " + meanColor);
+
+                if (meanColor.val[0] > 90){
+                    Imgproc.circle(image, center, radius, new Scalar(202, 27, 27), 4, 8, 0);
+                }
             }
 
             // Verificando se o contorno é um retângulo
             if (points.length == 4) {
                 Imgproc.drawContours(image, contours, i, new Scalar(0, 255, 0), 3);
                 System.out.println("Retângulo encontrado na posição x=" + points[0].x + ", y=" + points[0].y);
+
+                //System.out.println("Total " + meanColor);
+                System.out.println('\n');
             }
+
         }
 
         // Exibindo a imagem resultante
@@ -68,55 +92,15 @@ public class Main {
         ImgWindow.newWindow(image);
     }
 
-    public static void teste02() {
-        // Carrega a imagem do gabarito e a imagem com as respostas
-        Mat gabarito = Imgcodecs.imread("C:\\Users\\PC\\Downloads\\omr_test_1.png", Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
-        Mat respostas = Imgcodecs.imread("C:\\Users\\PC\\Downloads\\omr_test_1.png", Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
-        //ImgWindow.newWindow(respostas);
-
-        // Binariza as imagens
-        Imgproc.threshold(gabarito, gabarito, 0, 255, Imgproc.THRESH_BINARY_INV | Imgproc.THRESH_OTSU);
-        Imgproc.threshold(respostas, respostas, 0, 255, Imgproc.THRESH_BINARY_INV | Imgproc.THRESH_OTSU);
-        //ImgWindow.newWindow(respostas);
-
-        // Extrai as regiões dos círculos marcados no gabarito
-        List<MatOfPoint> gabaritoCircles = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        Mat gabaritoCopy = gabarito.clone();
-        Imgproc.findContours(gabaritoCopy, gabaritoCircles, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        //ImgWindow.newWindow(hierarchy);
-
-        // Para cada região, identifica se houve marcação na resposta correspondente
-        for (int i = 0; i < gabaritoCircles.size() / 5; i++) {
-            Mat circle = gabaritoCircles.get(i);
-            Moments m = Imgproc.moments(circle);
-            //ImgWindow.newWindow(circle);
-            Point center = new Point((int) (m.m10 / m.m00), (int) (m.m01 / m.m00));
-            int radius = (int) Math.round(Math.sqrt(m.m00 / Math.PI));
-
-            // Extrai a região da resposta correspondente
-            Rect roi = new Rect((int) center.x - radius, (int) center.y - radius, radius * 2, radius * 2);
-            Mat respostaRoi = new Mat(respostas, roi);
-
-            // Calcula a média dos valores da região para identificar a marcação
-            Scalar mean = Core.mean(respostaRoi);
-            if (mean.val[0] < 128) {
-                System.out.println("Questão " + (i + 1) + ": marcada");
-            } else {
-                System.out.println("Questão " + (i + 1) + ": não marcada");
-            }
-        }
-    }
-
-    public static void teste03() {
+    public static void exemplo2() {
         //Mat image = Imgcodecs.imread("C:\\Users\\PC\\Downloads\\omr_test_01.png", Imgcodecs.IMREAD_GRAYSCALE);
 
         // Carrega a imagem do gabarito em escala cinza
         Mat gabarito = Imgcodecs.imread("src/gabaritos/omr_test_01.png", Imgcodecs.IMREAD_GRAYSCALE);
 
         // Aplica uma limiarização para binarizar a imagem
-        Mat binarizado = new Mat();
-        Imgproc.threshold(gabarito, binarizado, 150, 255, Imgproc.THRESH_BINARY);
+        //Mat binarizado = new Mat();
+        //Imgproc.threshold(gabarito, binarizado, 150, 255, Imgproc.THRESH_BINARY);
 
         // Detecta os círculos no gabarito
         Mat circles = new Mat();
